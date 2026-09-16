@@ -45,7 +45,15 @@
   <div id="addModal" class="modal-wrap hidden"><div class="modal"><div class="modal-head"><h2>Add food</h2><button id="closeModal">×</button></div><div class="camera-box"><video id="video" class="hidden" autoplay playsinline></video><img id="photo" class="hidden" alt="Temporary food photo"><p id="cameraHelp">Open the camera or add the details manually.</p><div class="camera-actions"><button id="openCamera" class="secondary" type="button">📷 Open camera</button><button id="takePhoto" class="secondary hidden" type="button">Take photo</button></div><canvas id="canvas" class="hidden"></canvas><p class="notice">The photo stays only on this screen and is never uploaded.</p></div><form id="foodForm"><label>Food name<input id="foodName" required placeholder="Example: Milk"></label><label>Expiry date<input id="expiryDate" type="date" required></label><label>Storage<select id="storage"><option>Fridge</option><option>Freezer</option><option>Pantry</option></select></label><button class="primary wide" type="submit">Save food</button></form></div></div>
   <script type="module">
     // STEP 1: Replace every value below with your Firebase web app configuration.
-    const firebaseConfig={apiKey:"PASTE_API_KEY",authDomain:"PASTE_PROJECT.firebaseapp.com",projectId:"PASTE_PROJECT_ID",storageBucket:"PASTE_PROJECT.firebasestorage.app",messagingSenderId:"PASTE_SENDER_ID",appId:"PASTE_APP_ID"};
+    const firebaseConfig = {
+  apiKey: "AIzaSyDFDjRBR80fGtFvbVlqLEhKTnjSCof3suk",
+  authDomain: "zero-bites.firebaseapp.com",
+  projectId: "zero-bites",
+  storageBucket: "zero-bites.firebasestorage.app",
+  messagingSenderId: "259107689657",
+  appId: "1:259107689657:web:4e45e0d6172308e2bab768",
+  measurementId: "G-GMN53QS4XV"
+};
     const FIREBASE_SDK="12.2.1";
     const [{initializeApp},{getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged},{getFirestore,doc,setDoc,getDoc,collection,addDoc,deleteDoc,updateDoc,query,where,orderBy,onSnapshot,serverTimestamp,increment}]=await Promise.all([
       import(`https://www.gstatic.com/firebasejs/${FIREBASE_SDK}/firebase-app.js`),
