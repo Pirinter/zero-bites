@@ -52,8 +52,7 @@
   storageBucket: "zero-bites.firebasestorage.app",
   messagingSenderId: "259107689657",
   appId: "1:259107689657:web:4e45e0d6172308e2bab768",
-  measurementId: "G-GMN53QS4XV"
-};
+  measurementId: "G-GMN53QS4XV"};
     const FIREBASE_SDK="12.2.1";
     const [{initializeApp},{getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged},{getFirestore,doc,setDoc,getDoc,collection,addDoc,deleteDoc,updateDoc,query,where,orderBy,onSnapshot,serverTimestamp,increment}]=await Promise.all([
       import(`https://www.gstatic.com/firebasejs/${FIREBASE_SDK}/firebase-app.js`),
@@ -61,7 +60,7 @@
       import(`https://www.gstatic.com/firebasejs/${FIREBASE_SDK}/firebase-firestore.js`)
     ]);
     const configured=!Object.values(firebaseConfig).some(v=>v.startsWith("PASTE_"));
-    let app,auth,db,userProfile=null,authMode="login",unsubFoods=null,unsubChat=null,unsubRank=null,stream=null;
+    let app,auth,db,userProfile=null,authMode="login",unsubFoods=null,unsubChat=null,unsubRank=null,stream=null,creatingProfile=false;
     const $=id=>document.getElementById(id), normalize=v=>v.trim().toLowerCase(), alias=u=>`${normalize(u)}@users.zerobites.app`, initials=n=>n.slice(0,2).toUpperCase();
     const authView=$("authView"),appView=$("appView"),authError=$("authError");
     function showError(message){authError.textContent=message;authError.classList.remove("hidden")}
@@ -69,8 +68,8 @@
     $("loginTab").onclick=()=>switchAuth("login");$("signupTab").onclick=()=>switchAuth("signup");
     $("themeBtn").onclick=()=>{document.body.classList.toggle("dark");localStorage.setItem("zb-theme",document.body.classList.contains("dark")?"dark":"light");$("themeBtn").textContent=document.body.classList.contains("dark")?"☀️ Light":"🌙 Dark"};if(localStorage.getItem("zb-theme")==="dark")$("themeBtn").click();
     if(!configured)showError("Firebase is not connected yet. Complete the setup steps below the download link.");
-    if(configured){app=initializeApp(firebaseConfig);auth=getAuth(app);db=getFirestore(app);onAuthStateChanged(auth,async user=>{if(!user){showAuth();return}const snap=await getDoc(doc(db,"users",user.uid));if(!snap.exists()){await signOut(auth);showError("Your profile is missing.");return}userProfile={uid:user.uid,...snap.data()};showApp()})}
-    $("authForm").onsubmit=async e=>{e.preventDefault();if(!configured)return showError("Connect Firebase first.");const username=normalize($("username").value),password=$("password").value;if(!/^[a-z0-9_]{3,24}$/.test(username))return showError("Use 3–24 letters, numbers or underscores.");authError.classList.add("hidden");try{if(authMode==="signup"){const nameRef=doc(db,"usernames",username);if((await getDoc(nameRef)).exists())throw new Error("That username is already taken.");const credential=await createUserWithEmailAndPassword(auth,alias(username),password);await setDoc(doc(db,"users",credential.user.uid),{username,role:"user",streak:0,saved:0,createdAt:serverTimestamp()});await setDoc(nameRef,{uid:credential.user.uid})}else await signInWithEmailAndPassword(auth,alias(username),password)}catch(err){const code=err?.code||"";showError(code.includes("invalid-credential")?"Incorrect username or password.":code.includes("email-already")?"That username is already taken.":err.message||"Account request failed.")}}
+    if(configured){app=initializeApp(firebaseConfig);auth=getAuth(app);db=getFirestore(app);onAuthStateChanged(auth,async user=>{if(creatingProfile)return;if(!user){showAuth();return}try{const snap=await getDoc(doc(db,"users",user.uid));if(!snap.exists()){showAuth();showError("Your account exists, but its profile was not saved. Check your Firestore rules before trying again.");return}userProfile={uid:user.uid,...snap.data()};showApp()}catch(err){showAuth();showError(`Could not read your profile: ${err.message}`)}})}
+    $("authForm").onsubmit=async e=>{e.preventDefault();if(!configured)return showError("Connect Firebase first.");const username=normalize($("username").value),password=$("password").value;if(!/^[a-z0-9_]{3,24}$/.test(username))return showError("Use 3–24 letters, numbers or underscores.");authError.classList.add("hidden");try{if(authMode==="signup"){creatingProfile=true;const nameRef=doc(db,"usernames",username);const credential=await createUserWithEmailAndPassword(auth,alias(username),password);await setDoc(doc(db,"users",credential.user.uid),{username,role:"user",streak:0,saved:0,createdAt:serverTimestamp()});await setDoc(nameRef,{uid:credential.user.uid});userProfile={uid:credential.user.uid,username,role:"user",streak:0,saved:0};showApp()}else await signInWithEmailAndPassword(auth,alias(username),password)}catch(err){const code=err?.code||"";showError(code.includes("invalid-credential")?"Incorrect username or password.":code.includes("email-already")?"That username is already taken.":code.includes("permission-denied")?"Firestore blocked account setup. Check that the published rules allow creation of users and usernames.":err.message||"Account request failed.")}finally{creatingProfile=false}}
     function showAuth(){cleanup();authView.classList.remove("hidden");appView.classList.add("hidden")}
     function showApp(){authView.classList.add("hidden");appView.classList.remove("hidden");$("profileName").textContent=userProfile.username;$("avatar").textContent=initials(userProfile.username);$("profileRole").textContent=userProfile.role==="admin"?"Administrator":"Eco Saver";listenFoods();listenChat();listenRank();go("food")}
     $("logoutBtn").onclick=()=>signOut(auth);document.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>go(b.dataset.page));
